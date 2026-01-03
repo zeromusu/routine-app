@@ -1,0 +1,38 @@
+name: Server Unit Test
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - "server/**"
+            - ".github/workflows/server-unit-test.yml"
+    pull_request:
+        paths:
+            - "server/**"
+            - ".github/workflows/server-unit-test.yml"
+
+jobs:
+    unit-test:
+        name: Run Go Unit Tests
+        runs-on: ubuntu-latest
+
+        defaults:
+            run:
+                working-directory: server
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.23"
+                  cache-dependency-path: server/go.sum
+                  cache: true
+
+            - name: Install dependencies
+              run: go mod download
+
+            - name: Run tests
+              run: go test -v -race ./...
