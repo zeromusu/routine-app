@@ -3,7 +3,12 @@ package config
 import "os"
 
 type Config struct {
-	DB DBConfig
+	App AppConfig
+	DB  DBConfig
+}
+
+type AppConfig struct {
+	AppPort string
 }
 
 type DBConfig struct {
@@ -16,6 +21,9 @@ type DBConfig struct {
 
 func LoadConfig() *Config {
 	return &Config{
+		App: AppConfig{
+			AppPort: os.Getenv("APP_PORT"),
+		},
 		DB: DBConfig{
 			Host:     os.Getenv("DB_HOST"),
 			User:     os.Getenv("DB_USER"),
