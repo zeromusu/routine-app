@@ -13,7 +13,39 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestRoutine(t *testing.T) {
+func TestFindAll(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+
+	gormDB, _ := gorm.Open(postgres.New(postgres.Config{Conn: db}), &gorm.Config{})
+	repo := NewRoutinePersistence(gormDB)
+
+	getAllSQL := regexp.QuoteMeta(`SELECT * FROM "routines"`)
+
+	t.Run("Success", func(t *testing.T) {
+		rows := sqlmock.NewRows([]string{"id", "title", "interval"}).
+			AddRow(1, "筋トレ", "daily").
+			AddRow(2, "読書", "weekly")
+
+		mock.ExpectQuery(getAllSQL).WillReturnRows(rows)
+		results, err := repo.FindAll()
+
+		assert.NoError(t, err)
+		assert.Len(t, results, 2)
+		assert.Equal(t, "筋トレ", results[0].Title)
+	})
+
+	t.Run("Database Error", func(t *testing.T) {
+		mock.ExpectQuery(getAllSQL).WillReturnError(errors.New("db error"))
+
+		results, err := repo.FindAll()
+
+		assert.Nil(t, results)
+		assert.ErrorIs(t, err, domain.ErrDatabase)
+	})
+}
+
+func TestCreate(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 

@@ -8,6 +8,7 @@ import (
 //go:generate mockery --all --case=underscore --outpkg=mocks --output=./mocks
 
 type RoutineUseCase interface {
+	GetRoutines() ([]*domain.Routine, error)
 	CreateRoutine(title, interval string) (*domain.Routine, error)
 }
 
@@ -19,6 +20,10 @@ func NewRoutineUseCase(repo repository.RoutineRepository) RoutineUseCase {
 	return &routineUseCase{
 		routineRepository: repo,
 	}
+}
+
+func (u *routineUseCase) GetRoutines() ([]*domain.Routine, error) {
+	return u.routineRepository.FindAll()
 }
 
 func (u *routineUseCase) CreateRoutine(title, interval string) (*domain.Routine, error) {

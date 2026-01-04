@@ -10,6 +10,35 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+func TestRoutineUseCaseGetRoutines(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		mockRepo := mocks.NewRoutineRepository(t)
+		uc := NewRoutineUseCase(mockRepo)
+
+		expected := []*domain.Routine{{Title: "Test Routine", Interval: "daily"}}
+		mockRepo.On("FindAll").Return(expected, nil)
+
+		res, err := uc.GetRoutines()
+
+		assert.NoError(t, err)
+		assert.Equal(t, expected, res)
+		assert.Len(t, res, 1)
+	})
+
+	t.Run("fail", func(t *testing.T) {
+		mockRepo := mocks.NewRoutineRepository(t)
+		uc := NewRoutineUseCase(mockRepo)
+
+		mockRepo.On("FindAll").Return(nil, errors.New("db error"))
+
+		res, err := uc.GetRoutines()
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		assert.Equal(t, "db error", err.Error())
+	})
+}
+
 func TestRoutineUseCaseCreateRoutine(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		mockRepo := mocks.NewRoutineRepository(t)

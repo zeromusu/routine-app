@@ -17,6 +17,15 @@ func NewRoutinePersistence(db *gorm.DB) repository.RoutineRepository {
 	return &routinePersistence{db: db}
 }
 
+func (p *routinePersistence) FindAll() ([]*domain.Routine, error) {
+	var routines []*domain.Routine
+
+	if err := p.db.Find(&routines).Error; err != nil {
+		return nil, domain.ErrDatabase
+	}
+	return routines, nil
+}
+
 func (p *routinePersistence) Create(routine *domain.Routine) error {
 	err := p.db.Create(routine).Error
 	if err != nil {

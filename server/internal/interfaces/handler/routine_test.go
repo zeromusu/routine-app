@@ -16,6 +16,44 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+func TestRoutineHandlerGetAll(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("success", func(t *testing.T) {
+		mockUC := mocks.NewRoutineUseCase(t)
+		h := NewRoutineHandler(mockUC)
+
+		expected := []*domain.Routine{
+			{ID: 1, Title: "Routine 1", Interval: "daily"},
+			{ID: 2, Title: "Routine 2", Interval: "weekly"},
+		}
+		mockUC.On("GetRoutines").Return(expected, nil)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+
+		h.GetAll(c)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Body.String(), "Routine 1")
+		assert.Contains(t, w.Body.String(), "Routine 2")
+	})
+
+	t.Run("Database Error", func(t *testing.T) {
+		mockUC := mocks.NewRoutineUseCase(t)
+		h := NewRoutineHandler(mockUC)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+
+		mockUC.On("GetRoutines").Return(nil, domain.ErrDatabase)
+
+		h.GetAll(c)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
 func TestRoutineHandlerCreate(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

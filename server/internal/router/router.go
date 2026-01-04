@@ -19,6 +19,7 @@ func NewRouter(h AppHandlers) *gin.Engine {
 		{
 			routines := v1.Group("/routines")
 			{
+				routines.GET("", h.Routine.GetAll)
 				routines.POST("/create", h.Routine.Create)
 			}
 		}

@@ -31,6 +31,36 @@ func (_m *RoutineRepository) Create(routine *domain.Routine) error {
 	return r0
 }
 
+// FindAll provides a mock function with no fields
+func (_m *RoutineRepository) FindAll() ([]*domain.Routine, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAll")
+	}
+
+	var r0 []*domain.Routine
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([]*domain.Routine, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() []*domain.Routine); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*domain.Routine)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewRoutineRepository creates a new instance of RoutineRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewRoutineRepository(t interface {

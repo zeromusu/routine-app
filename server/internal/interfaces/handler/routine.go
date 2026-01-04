@@ -12,6 +12,7 @@ import (
 )
 
 type RoutineHandler interface {
+	GetAll(c *gin.Context)
 	Create(c *gin.Context)
 }
 
@@ -23,6 +24,16 @@ func NewRoutineHandler(uc usecase.RoutineUseCase) RoutineHandler {
 	return &routineHandler{
 		routineUseCase: uc,
 	}
+}
+
+func (h *routineHandler) GetAll(c *gin.Context) {
+	routines, err := h.routineUseCase.GetRoutines()
+	if err != nil {
+		response.RespondError(c, http.StatusInternalServerError, string(response.CodeInternalServerError), err.Error())
+		return
+	}
+
+	response.RespondSuccess(c, http.StatusOK, routines)
 }
 
 func (h *routineHandler) Create(c *gin.Context) {
