@@ -3,6 +3,7 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"routine-app-server/internal/domain"
@@ -19,7 +20,7 @@ import (
 func TestRoutineHandlerGetAll(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		mockUC := mocks.NewRoutineUseCase(t)
 		h := NewRoutineHandler(mockUC)
 
@@ -54,10 +55,79 @@ func TestRoutineHandlerGetAll(t *testing.T) {
 	})
 }
 
+func TestRoutineHandlerGetOne(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("Success", func(t *testing.T) {
+		mockUC := mocks.NewRoutineUseCase(t)
+		h := NewRoutineHandler(mockUC)
+
+		id := 1
+
+		expected := &domain.Routine{
+			ID: id, Title: "Routine 1", Interval: "daily",
+		}
+		mockUC.On("GetRoutine", id).Return(expected, nil)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+
+		c.Request, _ = http.NewRequest("GET", fmt.Sprintf("/v1/routines/%d", id), nil)
+
+		c.Params = gin.Params{{Key: "id", Value: fmt.Sprintf("%d", id)}}
+
+		h.GetOne(c)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		var resp response.APIResponse
+		json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.True(t, resp.Success)
+
+		data := resp.Data.(map[string]interface{})
+		assert.Equal(t, float64(id), data["id"])
+		assert.Equal(t, "Routine 1", data["title"])
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		mockUC := mocks.NewRoutineUseCase(t)
+		h := NewRoutineHandler(mockUC)
+
+		id := 99
+		mockUC.On("GetRoutine", id).Return(nil, domain.ErrNotFound)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest("GET", fmt.Sprintf("/v1/routines/%d", id), nil)
+		c.Params = gin.Params{{Key: "id", Value: fmt.Sprintf("%d", id)}}
+
+		h.GetOne(c)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("Database Error", func(t *testing.T) {
+		mockUC := mocks.NewRoutineUseCase(t)
+		h := NewRoutineHandler(mockUC)
+
+		id := 1
+		mockUC.On("GetRoutine", id).Return(nil, domain.ErrDatabase)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest("GET", fmt.Sprintf("/v1/routines/%d", id), nil)
+		c.Params = gin.Params{{Key: "id", Value: fmt.Sprintf("%d", id)}}
+
+		h.GetOne(c)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
 func TestRoutineHandlerCreate(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		mockUC := mocks.NewRoutineUseCase(t)
 		h := NewRoutineHandler(mockUC)
 
@@ -86,7 +156,7 @@ func TestRoutineHandlerCreate(t *testing.T) {
 		assert.Equal(t, expectedRoutine.Interval, data["interval"])
 	})
 
-	t.Run("Invalid", func(t *testing.T) {
+	t.Run("Invalid Data", func(t *testing.T) {
 		mockUC := mocks.NewRoutineUseCase(t)
 		h := NewRoutineHandler(mockUC)
 
@@ -109,7 +179,7 @@ func TestRoutineHandlerCreate(t *testing.T) {
 		json.Unmarshal(w.Body.Bytes(), &resp)
 		assert.Equal(t, string(response.CodeInvalidPayload), resp.Error.Code)
 	})
-	t.Run("Duplicate", func(t *testing.T) {
+	t.Run("Duplicate Data", func(t *testing.T) {
 		mockUC := mocks.NewRoutineUseCase(t)
 		h := NewRoutineHandler(mockUC)
 

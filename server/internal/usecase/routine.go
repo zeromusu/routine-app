@@ -9,6 +9,7 @@ import (
 
 type RoutineUseCase interface {
 	GetRoutines() ([]*domain.Routine, error)
+	GetRoutine(ID int) (*domain.Routine, error)
 	CreateRoutine(title, interval string) (*domain.Routine, error)
 }
 
@@ -24,6 +25,10 @@ func NewRoutineUseCase(repo repository.RoutineRepository) RoutineUseCase {
 
 func (u *routineUseCase) GetRoutines() ([]*domain.Routine, error) {
 	return u.routineRepository.FindAll()
+}
+
+func (u *routineUseCase) GetRoutine(ID int) (*domain.Routine, error) {
+	return u.routineRepository.FindOne(ID)
 }
 
 func (u *routineUseCase) CreateRoutine(title, interval string) (*domain.Routine, error) {

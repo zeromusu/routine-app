@@ -11,7 +11,7 @@ import (
 )
 
 func TestRoutineUseCaseGetRoutines(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		mockRepo := mocks.NewRoutineRepository(t)
 		uc := NewRoutineUseCase(mockRepo)
 
@@ -25,7 +25,7 @@ func TestRoutineUseCaseGetRoutines(t *testing.T) {
 		assert.Len(t, res, 1)
 	})
 
-	t.Run("fail", func(t *testing.T) {
+	t.Run("Database Error", func(t *testing.T) {
 		mockRepo := mocks.NewRoutineRepository(t)
 		uc := NewRoutineUseCase(mockRepo)
 
@@ -39,8 +39,53 @@ func TestRoutineUseCaseGetRoutines(t *testing.T) {
 	})
 }
 
+func TestRoutineUseCaseGetRoutine(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockRepo := mocks.NewRoutineRepository(t)
+		uc := NewRoutineUseCase(mockRepo)
+
+		id := 1
+
+		expected := &domain.Routine{ID: id, Title: "Test Routine", Interval: "daily"}
+		mockRepo.On("FindOne", id).Return(expected, nil)
+
+		res, err := uc.GetRoutine(id)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expected, res)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		mockRepo := mocks.NewRoutineRepository(t)
+		uc := NewRoutineUseCase(mockRepo)
+
+		id := 1
+		mockRepo.On("FindOne", id).Return(nil, domain.ErrNotFound)
+
+		res, err := uc.GetRoutine(id)
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		assert.ErrorIs(t, err, domain.ErrNotFound)
+	})
+
+	t.Run("Database Error", func(t *testing.T) {
+		mockRepo := mocks.NewRoutineRepository(t)
+		uc := NewRoutineUseCase(mockRepo)
+
+		id := 1
+		mockRepo.On("FindOne", id).Return(nil, domain.ErrDatabase)
+
+		res, err := uc.GetRoutine(id)
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		assert.ErrorIs(t, err, domain.ErrDatabase)
+	})
+}
+
 func TestRoutineUseCaseCreateRoutine(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		mockRepo := mocks.NewRoutineRepository(t)
 		uc := NewRoutineUseCase(mockRepo)
 
@@ -58,16 +103,42 @@ func TestRoutineUseCaseCreateRoutine(t *testing.T) {
 		assert.Equal(t, interval, res.Interval)
 	})
 
-	t.Run("fail", func(t *testing.T) {
+	t.Run("Invalid Data", func(t *testing.T) {
 		mockRepo := mocks.NewRoutineRepository(t)
 		uc := NewRoutineUseCase(mockRepo)
 
-		mockRepo.On("Create", mock.Anything).Return(errors.New("db error"))
+		mockRepo.On("Create", mock.Anything).Return(domain.ErrInvalidData)
+
+		res, err := uc.CreateRoutine("不正", "invalid")
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		assert.ErrorIs(t, err, domain.ErrInvalidData)
+	})
+
+	t.Run("Duplicate Data", func(t *testing.T) {
+		mockRepo := mocks.NewRoutineRepository(t)
+		uc := NewRoutineUseCase(mockRepo)
+
+		mockRepo.On("Create", mock.Anything).Return(domain.ErrDuplicate)
+
+		res, err := uc.CreateRoutine("重複タイトル", "daily")
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		assert.ErrorIs(t, err, domain.ErrDuplicate)
+	})
+
+	t.Run("Database Error", func(t *testing.T) {
+		mockRepo := mocks.NewRoutineRepository(t)
+		uc := NewRoutineUseCase(mockRepo)
+
+		mockRepo.On("Create", mock.Anything).Return(domain.ErrDatabase)
 
 		res, err := uc.CreateRoutine("test", "daily")
 
 		assert.Error(t, err)
 		assert.Nil(t, res)
-		assert.Equal(t, "db error", err.Error())
+		assert.ErrorIs(t, err, domain.ErrDatabase)
 	})
 }

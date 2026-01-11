@@ -26,6 +26,18 @@ func (p *routinePersistence) FindAll() ([]*domain.Routine, error) {
 	return routines, nil
 }
 
+func (p *routinePersistence) FindOne(ID int) (*domain.Routine, error) {
+	var routine domain.Routine
+
+	if err := p.db.First(&routine, ID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, domain.ErrDatabase
+	}
+	return &routine, nil
+}
+
 func (p *routinePersistence) Create(routine *domain.Routine) error {
 	err := p.db.Create(routine).Error
 	if err != nil {

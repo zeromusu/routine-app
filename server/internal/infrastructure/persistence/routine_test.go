@@ -45,6 +45,52 @@ func TestFindAll(t *testing.T) {
 	})
 }
 
+func TestFindOne(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+
+	gormDB, _ := gorm.Open(postgres.New(postgres.Config{Conn: db}), &gorm.Config{})
+	repo := NewRoutinePersistence(gormDB)
+
+	getOneSQL := regexp.QuoteMeta(`SELECT * FROM "routines" WHERE "routines"."id" = $1 ORDER BY "routines"."id" LIMIT $2`)
+
+	t.Run("Success", func(t *testing.T) {
+		rows := sqlmock.NewRows([]string{"id", "title", "interval"}).
+			AddRow(1, "筋トレ", "daily")
+
+		mock.ExpectQuery(getOneSQL).
+			WithArgs(1, 1).
+			WillReturnRows(rows)
+		result, err := repo.FindOne(1)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 1, result.ID)
+		assert.Equal(t, "筋トレ", result.Title)
+		assert.Equal(t, "daily", result.Interval)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		mock.ExpectQuery(getOneSQL).
+			WithArgs(99, 1).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "title", "interval"}))
+
+		result, err := repo.FindOne(99)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.ErrorIs(t, err, domain.ErrNotFound)
+	})
+
+	t.Run("Database Error", func(t *testing.T) {
+		mock.ExpectQuery(getOneSQL).WillReturnError(errors.New("db error"))
+
+		results, err := repo.FindAll()
+
+		assert.Nil(t, results)
+		assert.ErrorIs(t, err, domain.ErrDatabase)
+	})
+}
+
 func TestCreate(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()

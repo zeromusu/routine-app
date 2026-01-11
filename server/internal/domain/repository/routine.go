@@ -6,5 +6,6 @@ import "routine-app-server/internal/domain"
 
 type RoutineRepository interface {
 	FindAll() ([]*domain.Routine, error)
+	FindOne(ID int) (*domain.Routine, error)
 	Create(routine *domain.Routine) error
 }

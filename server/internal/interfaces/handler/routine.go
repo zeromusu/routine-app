@@ -7,12 +7,14 @@ import (
 	"routine-app-server/internal/interfaces/request"
 	"routine-app-server/internal/interfaces/response"
 	"routine-app-server/internal/usecase"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type RoutineHandler interface {
 	GetAll(c *gin.Context)
+	GetOne(c *gin.Context)
 	Create(c *gin.Context)
 }
 
@@ -34,6 +36,25 @@ func (h *routineHandler) GetAll(c *gin.Context) {
 	}
 
 	response.RespondSuccess(c, http.StatusOK, routines)
+}
+
+func (h *routineHandler) GetOne(c *gin.Context) {
+	strId := c.Param("id")
+	id, err := strconv.Atoi(strId)
+	if err != nil {
+		response.RespondError(c, http.StatusBadRequest, string(response.CodeInvalidPayload), err.Error())
+	}
+	routine, err := h.routineUseCase.GetRoutine(id)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			response.RespondError(c, http.StatusNotFound, string(response.CodeNotFound), err.Error())
+			return
+		}
+		response.RespondError(c, http.StatusInternalServerError, string(response.CodeInternalServerError), err.Error())
+		return
+	}
+
+	response.RespondSuccess(c, http.StatusOK, routine)
 }
 
 func (h *routineHandler) Create(c *gin.Context) {
