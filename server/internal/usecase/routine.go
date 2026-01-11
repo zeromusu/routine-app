@@ -27,8 +27,8 @@ func (u *routineUseCase) GetRoutines() ([]*domain.Routine, error) {
 	return u.routineRepository.FindAll()
 }
 
-func (u *routineUseCase) GetRoutine(ID int) (*domain.Routine, error) {
-	return u.routineRepository.FindOne(ID)
+func (u *routineUseCase) GetRoutine(id int) (*domain.Routine, error) {
+	return u.routineRepository.FindOne(id)
 }
 
 func (u *routineUseCase) CreateRoutine(title, interval string) (*domain.Routine, error) {

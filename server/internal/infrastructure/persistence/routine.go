@@ -26,10 +26,10 @@ func (p *routinePersistence) FindAll() ([]*domain.Routine, error) {
 	return routines, nil
 }
 
-func (p *routinePersistence) FindOne(ID int) (*domain.Routine, error) {
+func (p *routinePersistence) FindOne(id int) (*domain.Routine, error) {
 	var routine domain.Routine
 
-	if err := p.db.First(&routine, ID).Error; err != nil {
+	if err := p.db.First(&routine, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
