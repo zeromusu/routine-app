@@ -23,6 +23,7 @@ func NewRouter(h AppHandlers) *gin.Engine {
 				routines.GET("/:id", h.Routine.GetOne)
 				routines.POST("/create", h.Routine.Create)
 				routines.PUT("/:id", h.Routine.Update)
+				routines.DELETE("/:id", h.Routine.Delete)
 			}
 		}
 	}

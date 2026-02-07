@@ -12,6 +12,7 @@ type RoutineUseCase interface {
 	GetRoutine(ID int) (*domain.Routine, error)
 	CreateRoutine(title, interval string) (*domain.Routine, error)
 	UpdateRoutine(id int, title, interval string) (*domain.Routine, error)
+	DeleteRoutine(id int) error
 }
 
 type routineUseCase struct {
@@ -57,4 +58,8 @@ func (u *routineUseCase) UpdateRoutine(id int, title, interval string) (*domain.
 		return nil, err
 	}
 	return existing, nil
+}
+
+func (u *routineUseCase) DeleteRoutine(id int) error {
+	return u.routineRepository.Delete(id)
 }

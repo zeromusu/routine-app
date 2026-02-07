@@ -346,3 +346,70 @@ func TestRoutineHandlerUpdate(t *testing.T) {
 		assert.Equal(t, string(response.CodeInternalServerError), resp.Error.Code)
 	})
 }
+
+func TestRoutineHandlerDelete(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("Success", func(t *testing.T) {
+		mockUC := mocks.NewRoutineUseCase(t)
+		h := NewRoutineHandler(mockUC)
+
+		id := 1
+
+		mockUC.On("DeleteRoutine", id).Return(nil)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest("DELETE", fmt.Sprintf("/v1/routines/%d", id), nil)
+		c.Params = gin.Params{{Key: "id", Value: fmt.Sprintf("%d", id)}}
+
+		h.Delete(c)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp response.APIResponse
+		json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.True(t, resp.Success)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		mockUC := mocks.NewRoutineUseCase(t)
+		h := NewRoutineHandler(mockUC)
+
+		id := 99
+
+		mockUC.On("DeleteRoutine", id).Return(domain.ErrNotFound)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest("DELETE", fmt.Sprintf("/v1/routines/%d", id), nil)
+		c.Params = gin.Params{{Key: "id", Value: fmt.Sprintf("%d", id)}}
+
+		h.Delete(c)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		var resp response.APIResponse
+		json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.Equal(t, string(response.CodeNotFound), resp.Error.Code)
+	})
+
+	t.Run("Database Error", func(t *testing.T) {
+		mockUC := mocks.NewRoutineUseCase(t)
+		h := NewRoutineHandler(mockUC)
+
+		id := 1
+
+		mockUC.On("DeleteRoutine", id).Return(domain.ErrDatabase)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest("DELETE", fmt.Sprintf("/v1/routines/%d", id), nil)
+		c.Params = gin.Params{{Key: "id", Value: fmt.Sprintf("%d", id)}}
+
+		h.Delete(c)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		var resp response.APIResponse
+		json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.Equal(t, string(response.CodeInternalServerError), resp.Error.Code)
+	})
+}

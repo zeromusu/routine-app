@@ -213,3 +213,46 @@ func TestRoutineUseCaseUpdateRoutine(t *testing.T) {
 		assert.ErrorIs(t, err, domain.ErrDatabase)
 	})
 }
+
+func TestRoutineUseCaseDeleteRoutine(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockRepo := mocks.NewRoutineRepository(t)
+		uc := NewRoutineUseCase(mockRepo)
+
+		id := 1
+
+		mockRepo.On("Delete", id).Return(nil)
+
+		err := uc.DeleteRoutine(id)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		mockRepo := mocks.NewRoutineRepository(t)
+		uc := NewRoutineUseCase(mockRepo)
+
+		id := 99
+
+		mockRepo.On("Delete", id).Return(domain.ErrNotFound)
+
+		err := uc.DeleteRoutine(id)
+
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, domain.ErrNotFound)
+	})
+
+	t.Run("Database Error", func(t *testing.T) {
+		mockRepo := mocks.NewRoutineRepository(t)
+		uc := NewRoutineUseCase(mockRepo)
+
+		id := 1
+
+		mockRepo.On("Delete", id).Return(domain.ErrDatabase)
+
+		err := uc.DeleteRoutine(id)
+
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, domain.ErrDatabase)
+	})
+}

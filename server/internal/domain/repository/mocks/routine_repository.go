@@ -31,6 +31,24 @@ func (_m *RoutineRepository) Create(routine *domain.Routine) error {
 	return r0
 }
 
+// Delete provides a mock function with given fields: id
+func (_m *RoutineRepository) Delete(id int) error {
+	ret := _m.Called(id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int) error); ok {
+		r0 = rf(id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // FindAll provides a mock function with no fields
 func (_m *RoutineRepository) FindAll() ([]*domain.Routine, error) {
 	ret := _m.Called()

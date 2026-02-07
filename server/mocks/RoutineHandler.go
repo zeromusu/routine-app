@@ -18,6 +18,11 @@ func (_m *RoutineHandler) Create(c *gin.Context) {
 	_m.Called(c)
 }
 
+// Delete provides a mock function with given fields: c
+func (_m *RoutineHandler) Delete(c *gin.Context) {
+	_m.Called(c)
+}
+
 // GetAll provides a mock function with given fields: c
 func (_m *RoutineHandler) GetAll(c *gin.Context) {
 	_m.Called(c)

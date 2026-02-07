@@ -70,3 +70,16 @@ func (p *routinePersistence) Update(routine *domain.Routine) error {
 
 	return nil
 }
+
+func (p *routinePersistence) Delete(id int) error {
+	result := p.db.Delete(&domain.Routine{}, id)
+	if result.Error != nil {
+		return domain.ErrDatabase
+	}
+
+	if result.RowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+
+	return nil
+}

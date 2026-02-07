@@ -43,6 +43,24 @@ func (_m *RoutineUseCase) CreateRoutine(title string, interval string) (*domain.
 	return r0, r1
 }
 
+// DeleteRoutine provides a mock function with given fields: id
+func (_m *RoutineUseCase) DeleteRoutine(id int) error {
+	ret := _m.Called(id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteRoutine")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int) error); ok {
+		r0 = rf(id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetRoutine provides a mock function with given fields: ID
 func (_m *RoutineUseCase) GetRoutine(ID int) (*domain.Routine, error) {
 	ret := _m.Called(ID)

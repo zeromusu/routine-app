@@ -235,3 +235,52 @@ func TestRoutinePersistenceUpdate(t *testing.T) {
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
+
+func TestRoutinePersistenceDelete(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+
+	gormDB, _ := gorm.Open(postgres.New(postgres.Config{Conn: db}), &gorm.Config{})
+	repo := NewRoutinePersistence(gormDB)
+
+	deleteSQL := regexp.QuoteMeta(`DELETE FROM "routines" WHERE "routines"."id" = $1`)
+
+	t.Run("Success", func(t *testing.T) {
+		id := 1
+		mock.ExpectBegin()
+		mock.ExpectExec(deleteSQL).
+			WithArgs(id).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectCommit()
+
+		err := repo.Delete(id)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		id := 99
+		mock.ExpectBegin()
+		mock.ExpectExec(deleteSQL).
+			WithArgs(id).
+			WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectCommit()
+
+		err := repo.Delete(id)
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, domain.ErrNotFound)
+	})
+
+	t.Run("Database Error", func(t *testing.T) {
+		id := 1
+		mock.ExpectBegin()
+		mock.ExpectExec(deleteSQL).
+			WithArgs(id).
+			WillReturnError(errors.New("connection reset by peer"))
+		mock.ExpectRollback()
+
+		err := repo.Delete(id)
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, domain.ErrDatabase)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}

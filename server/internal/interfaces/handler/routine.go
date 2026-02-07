@@ -17,6 +17,7 @@ type RoutineHandler interface {
 	GetOne(c *gin.Context)
 	Create(c *gin.Context)
 	Update(c *gin.Context)
+	Delete(c *gin.Context)
 }
 
 type routineHandler struct {
@@ -111,4 +112,24 @@ func (h *routineHandler) Update(c *gin.Context) {
 	}
 
 	response.RespondSuccess(c, http.StatusOK, routine)
+}
+
+func (h *routineHandler) Delete(c *gin.Context) {
+	strId := c.Param("id")
+	id, err := strconv.Atoi(strId)
+	if err != nil {
+		response.RespondError(c, http.StatusBadRequest, string(response.CodeInvalidPayload), err.Error())
+		return
+	}
+
+	if err := h.routineUseCase.DeleteRoutine(id); err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			response.RespondError(c, http.StatusNotFound, string(response.CodeNotFound), err.Error())
+			return
+		}
+		response.RespondError(c, http.StatusInternalServerError, string(response.CodeInternalServerError), err.Error())
+		return
+	}
+
+	response.RespondSuccess(c, http.StatusOK, gin.H{"message": "Routine deleted successfully"})
 }

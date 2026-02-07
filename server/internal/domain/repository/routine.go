@@ -9,4 +9,5 @@ type RoutineRepository interface {
 	FindOne(id int) (*domain.Routine, error)
 	Create(routine *domain.Routine) error
 	Update(routine *domain.Routine) error
+	Delete(id int) error
 }
