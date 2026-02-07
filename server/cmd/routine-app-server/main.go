@@ -10,7 +10,7 @@ import (
 // @title Routine App API
 // @version 1.0
 // @description This is the backend API for the Routine App.
-// @BasePath /v1
+// @BasePath /api/v1
 func main() {
 	// Read env file
 	if err := godotenv.Load(); err != nil {
