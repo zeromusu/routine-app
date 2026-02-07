@@ -4,6 +4,11 @@ import (
 	"routine-app-server/internal/interfaces/handler"
 
 	"github.com/gin-gonic/gin"
+
+	_ "routine-app-server/docs"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type AppHandlers struct {
@@ -12,6 +17,8 @@ type AppHandlers struct {
 
 func NewRouter(h AppHandlers) *gin.Engine {
 	r := gin.Default()
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	api := r.Group("/api")
 	{
