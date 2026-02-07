@@ -16,6 +16,7 @@ type RoutineHandler interface {
 	GetAll(c *gin.Context)
 	GetOne(c *gin.Context)
 	Create(c *gin.Context)
+	Update(c *gin.Context)
 }
 
 type routineHandler struct {
@@ -79,4 +80,35 @@ func (h *routineHandler) Create(c *gin.Context) {
 	}
 
 	response.RespondSuccess(c, http.StatusCreated, routine)
+}
+
+func (h *routineHandler) Update(c *gin.Context) {
+	strId := c.Param("id")
+	id, err := strconv.Atoi(strId)
+	if err != nil {
+		response.RespondError(c, http.StatusBadRequest, string(response.CodeInvalidPayload), err.Error())
+		return
+	}
+
+	var updateRoutine request.UpdateRoutineRequest
+	if err := c.ShouldBindJSON(&updateRoutine); err != nil {
+		response.RespondError(c, http.StatusBadRequest, string(response.CodeInvalidPayload), err.Error())
+		return
+	}
+
+	routine, err := h.routineUseCase.UpdateRoutine(id, updateRoutine.Title, updateRoutine.Interval)
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidData) {
+			response.RespondError(c, http.StatusBadRequest, string(response.CodeInvalidPayload), err.Error())
+			return
+		}
+		if errors.Is(err, domain.ErrNotFound) {
+			response.RespondError(c, http.StatusNotFound, string(response.CodeNotFound), err.Error())
+			return
+		}
+		response.RespondError(c, http.StatusInternalServerError, string(response.CodeInternalServerError), err.Error())
+		return
+	}
+
+	response.RespondSuccess(c, http.StatusOK, routine)
 }

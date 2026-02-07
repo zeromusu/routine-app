@@ -54,3 +54,19 @@ func (p *routinePersistence) Create(routine *domain.Routine) error {
 	}
 	return nil
 }
+
+func (p *routinePersistence) Update(routine *domain.Routine) error {
+	result := p.db.Model(routine).Updates(routine)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrInvalidData) {
+			return domain.ErrInvalidData
+		}
+		return domain.ErrDatabase
+	}
+
+	if result.RowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+
+	return nil
+}

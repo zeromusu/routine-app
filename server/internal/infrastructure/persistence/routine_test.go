@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestFindAll(t *testing.T) {
+func TestRoutinePersistenceFindAll(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
@@ -45,7 +45,7 @@ func TestFindAll(t *testing.T) {
 	})
 }
 
-func TestFindOne(t *testing.T) {
+func TestRoutinePersistenceFindOne(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
@@ -91,7 +91,7 @@ func TestFindOne(t *testing.T) {
 	})
 }
 
-func TestCreate(t *testing.T) {
+func TestRoutinePersistenceCreate(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
@@ -111,7 +111,6 @@ func TestCreate(t *testing.T) {
 		err := repo.Create(routine)
 
 		assert.NoError(t, err)
-
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
@@ -152,6 +151,86 @@ func TestCreate(t *testing.T) {
 
 		err := repo.Create(routine)
 
+		assert.ErrorIs(t, err, domain.ErrDatabase)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+func TestRoutinePersistenceUpdate(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+
+	gormDB, _ := gorm.Open(postgres.New(postgres.Config{Conn: db}), &gorm.Config{})
+	repo := NewRoutinePersistence(gormDB)
+
+	updateSQL := `UPDATE "routines" SET`
+
+	t.Run("Success", func(t *testing.T) {
+		routine := &domain.Routine{
+			ID:       1,
+			Title:    "更新後",
+			Interval: "weekly",
+		}
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(updateSQL)).
+			WithArgs(routine.Title, routine.Interval, sqlmock.AnyArg(), routine.ID).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		err := repo.Update(routine)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("Invalid Data", func(t *testing.T) {
+		routine := &domain.Routine{
+			ID:       1,
+			Title:    "invalid",
+			Interval: "invalid",
+		}
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(updateSQL)).
+			WithArgs(routine.Title, routine.Interval, sqlmock.AnyArg(), routine.ID).
+			WillReturnError(gorm.ErrInvalidData)
+		mock.ExpectRollback()
+
+		err := repo.Update(routine)
+
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, domain.ErrInvalidData)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		routine := &domain.Routine{ID: 99}
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(updateSQL)).
+			WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectCommit()
+
+		err := repo.Update(routine)
+
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, domain.ErrNotFound)
+	})
+
+	t.Run("Database Error", func(t *testing.T) {
+		routine := &domain.Routine{
+			ID:       1,
+			Title:    "更新後",
+			Interval: "weekly",
+		}
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(updateSQL)).
+			WillReturnError(errors.New("connection reset by peer"))
+		mock.ExpectRollback()
+
+		err := repo.Update(routine)
+
+		assert.Error(t, err)
 		assert.ErrorIs(t, err, domain.ErrDatabase)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})

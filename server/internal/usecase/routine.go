@@ -11,6 +11,7 @@ type RoutineUseCase interface {
 	GetRoutines() ([]*domain.Routine, error)
 	GetRoutine(ID int) (*domain.Routine, error)
 	CreateRoutine(title, interval string) (*domain.Routine, error)
+	UpdateRoutine(id int, title, interval string) (*domain.Routine, error)
 }
 
 type routineUseCase struct {
@@ -41,4 +42,19 @@ func (u *routineUseCase) CreateRoutine(title, interval string) (*domain.Routine,
 		return nil, err
 	}
 	return routine, nil
+}
+
+func (u *routineUseCase) UpdateRoutine(id int, title, interval string) (*domain.Routine, error) {
+	existing, err := u.routineRepository.FindOne(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing.Title = title
+	existing.Interval = interval
+
+	if err := u.routineRepository.Update(existing); err != nil {
+		return nil, err
+	}
+	return existing, nil
 }

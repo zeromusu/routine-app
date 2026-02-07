@@ -231,3 +231,118 @@ func TestRoutineHandlerCreate(t *testing.T) {
 		assert.Equal(t, string(response.CodeInternalServerError), resp.Error.Code)
 	})
 }
+
+func TestRoutineHandlerUpdate(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("Success", func(t *testing.T) {
+		mockUC := mocks.NewRoutineUseCase(t)
+		h := NewRoutineHandler(mockUC)
+
+		input := request.UpdateRoutineRequest{
+			Title:    "更新後タイトル",
+			Interval: "daily",
+		}
+		body, _ := json.Marshal(input)
+
+		id := 1
+
+		expectedRoutine := &domain.Routine{ID: id, Title: "更新後タイトル", Interval: "daily"}
+		mockUC.On("UpdateRoutine", id, input.Title, input.Interval).Return(expectedRoutine, nil)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest("PUT", fmt.Sprintf("/v1/routines/%d", id), bytes.NewBuffer(body))
+		c.Params = gin.Params{{Key: "id", Value: fmt.Sprintf("%d", id)}}
+
+		h.Update(c)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp response.APIResponse
+		json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.True(t, resp.Success)
+
+		data := resp.Data.(map[string]interface{})
+		assert.Equal(t, expectedRoutine.Title, data["title"])
+		assert.Equal(t, expectedRoutine.Interval, data["interval"])
+	})
+
+	t.Run("Invalid Data", func(t *testing.T) {
+		mockUC := mocks.NewRoutineUseCase(t)
+		h := NewRoutineHandler(mockUC)
+
+		input := request.UpdateRoutineRequest{
+			Title:    "不正",
+			Interval: "invalid",
+		}
+		body, _ := json.Marshal(input)
+
+		id := 1
+
+		mockUC.On("UpdateRoutine", id, input.Title, input.Interval).Return(nil, domain.ErrInvalidData)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest("PUT", fmt.Sprintf("/v1/routines/%d", id), bytes.NewBuffer(body))
+		c.Params = gin.Params{{Key: "id", Value: fmt.Sprintf("%d", id)}}
+
+		h.Update(c)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		var resp response.APIResponse
+		json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.Equal(t, string(response.CodeInvalidPayload), resp.Error.Code)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		mockUC := mocks.NewRoutineUseCase(t)
+		h := NewRoutineHandler(mockUC)
+
+		input := request.UpdateRoutineRequest{
+			Title:    "test",
+			Interval: "daily",
+		}
+		body, _ := json.Marshal(input)
+
+		id := 99
+		mockUC.On("UpdateRoutine", id, input.Title, input.Interval).Return(nil, domain.ErrNotFound)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest("PUT", fmt.Sprintf("/v1/routines/%d", id), bytes.NewBuffer(body))
+		c.Params = gin.Params{{Key: "id", Value: fmt.Sprintf("%d", id)}}
+
+		h.Update(c)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		var resp response.APIResponse
+		json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.Equal(t, string(response.CodeNotFound), resp.Error.Code)
+	})
+
+	t.Run("Database Error", func(t *testing.T) {
+		mockUC := mocks.NewRoutineUseCase(t)
+		h := NewRoutineHandler(mockUC)
+
+		input := request.UpdateRoutineRequest{
+			Title:    "test",
+			Interval: "daily",
+		}
+		body, _ := json.Marshal(input)
+
+		id := 1
+		mockUC.On("UpdateRoutine", id, input.Title, input.Interval).Return(nil, domain.ErrDatabase)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest("PUT", fmt.Sprintf("/v1/routines/%d", id), bytes.NewBuffer(body))
+		c.Params = gin.Params{{Key: "id", Value: fmt.Sprintf("%d", id)}}
+
+		h.Update(c)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		var resp response.APIResponse
+		json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.Equal(t, string(response.CodeInternalServerError), resp.Error.Code)
+	})
+}

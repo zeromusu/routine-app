@@ -142,3 +142,74 @@ func TestRoutineUseCaseCreateRoutine(t *testing.T) {
 		assert.ErrorIs(t, err, domain.ErrDatabase)
 	})
 }
+
+func TestRoutineUseCaseUpdateRoutine(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockRepo := mocks.NewRoutineRepository(t)
+		uc := NewRoutineUseCase(mockRepo)
+
+		id := 1
+		existing := &domain.Routine{
+			ID:       id,
+			Title:    "旧タイトル",
+			Interval: "weekly",
+		}
+
+		mockRepo.On("FindOne", id).Return(existing, nil)
+		mockRepo.On("Update", mock.MatchedBy(func(r *domain.Routine) bool {
+			return r.Title == existing.Title && r.Interval == existing.Interval
+		})).Return(nil)
+
+		res, err := uc.UpdateRoutine(existing.ID, existing.Title, existing.Interval)
+
+		assert.NoError(t, err)
+		assert.Equal(t, existing.Title, res.Title)
+		assert.Equal(t, existing.Interval, res.Interval)
+	})
+
+	t.Run("Invalid Data", func(t *testing.T) {
+		mockRepo := mocks.NewRoutineRepository(t)
+		uc := NewRoutineUseCase(mockRepo)
+
+		id := 1
+
+		mockRepo.On("FindOne", id).Return(&domain.Routine{ID: id}, nil)
+		mockRepo.On("Update", mock.Anything).Return(domain.ErrInvalidData)
+
+		res, err := uc.UpdateRoutine(1, "不正", "invalid")
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		assert.ErrorIs(t, err, domain.ErrInvalidData)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		mockRepo := mocks.NewRoutineRepository(t)
+		uc := NewRoutineUseCase(mockRepo)
+
+		id := 99
+		mockRepo.On("FindOne", id).Return(nil, domain.ErrNotFound)
+
+		res, err := uc.UpdateRoutine(id, "タイトル", "daily")
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		assert.ErrorIs(t, err, domain.ErrNotFound)
+	})
+
+	t.Run("Database Error", func(t *testing.T) {
+		mockRepo := mocks.NewRoutineRepository(t)
+		uc := NewRoutineUseCase(mockRepo)
+
+		id := 1
+
+		mockRepo.On("FindOne", mock.Anything).Return(&domain.Routine{ID: id}, nil)
+		mockRepo.On("Update", mock.Anything).Return(domain.ErrDatabase)
+
+		res, err := uc.UpdateRoutine(id, "test", "test")
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		assert.ErrorIs(t, err, domain.ErrDatabase)
+	})
+}
