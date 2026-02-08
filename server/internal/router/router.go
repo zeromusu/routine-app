@@ -3,6 +3,7 @@ package router
 import (
 	"routine-app-server/internal/interfaces/handler"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	_ "routine-app-server/docs"
@@ -18,6 +19,13 @@ type AppHandlers struct {
 func NewRouter(h AppHandlers) *gin.Engine {
 	r := gin.Default()
 
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:4000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		AllowCredentials: true,
+	}))
+
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	api := r.Group("/api")
@@ -28,7 +36,7 @@ func NewRouter(h AppHandlers) *gin.Engine {
 			{
 				routines.GET("", h.Routine.GetAll)
 				routines.GET("/:id", h.Routine.GetOne)
-				routines.POST("/create", h.Routine.Create)
+				routines.POST("", h.Routine.Create)
 				routines.PUT("/:id", h.Routine.Update)
 				routines.DELETE("/:id", h.Routine.Delete)
 			}
