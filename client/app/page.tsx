@@ -1,6 +1,6 @@
 import { Routine, APIResponse } from "../types/routine";
 import RoutineForm from "@/components/RoutineForm";
-import DeleteButton from "@/components/DeleteButton";
+import EditableRoutine from "@/components/EditableRoutine";
 
 export default async function Home() {
   const res = await fetch("http://backend:8080/api/v1/routines", {
@@ -17,14 +17,7 @@ export default async function Home() {
 
         <div className="grid gap-4">
           {routines?.map((r) => (
-            <div key={r.id} className="p-4 border rounded shadow-sm bg-gray-50">
-              <div>
-                <h2 className="text-xl font-bold">{r.title}</h2>
-                <p className="text-gray-600">Interval: </p>
-              </div>
-
-              <DeleteButton id={r.id} />
-            </div>
+            <EditableRoutine key={r.id} routine={r} />
           ))}
         </div>
       </div>
